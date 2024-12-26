@@ -1,0 +1,86 @@
+version: "1.3.5"
+
+# 更改世界边界
+world-border:
+  world:
+    centerX: 0.0
+    centerZ: 0.0
+    size: 1000.0
+  world2:
+    centerX: 0.0
+    centerZ: 0.0
+    size: 1000.0
+
+
+# 相关权限
+# arktools.deathpunish.bypass 逃过死亡惩罚
+
+# 死亡惩罚
+punishments:
+  enable: false
+  # 死亡是否清除玩家背包
+  clearInventory: true
+  # 死亡是否清除玩家末影箱
+  clearEnderchest: true
+  # 死亡是否重置玩家经验值
+  resetExp: false
+  # 死亡时减少玩家生命上限
+  reduceMaxHealth: true
+  # 死亡时减少的生命值
+  reduceHealthAmount: 2.0
+  # 血量上限为1时死亡后是否封禁玩家
+  banOnDeath: false
+
+  # 触发死亡惩罚信息
+  deathMsg: "§4§l你死了，你因此受到了惩罚！"
+  # 跳过死亡惩罚
+  bypassPunishMsg: "§a你逃过了死亡惩罚！"
+
+  banReason: "§4§l你已经不能再复活了！"
+
+
+
+customItems:
+  # 不能自己添加物品
+  heal_item:
+    # 最大生命值，填入整数
+    maxHealth: 20
+    # 物品外观
+    material: "ENCHANTED_GOLDEN_APPLE"
+    # 显示名称
+    displayName: "§6生命果实"
+    # 描述
+    lore:
+      - "§7食用后恢复生命上限，并获取一些额外效果"
+    # 配方
+    shape1: "yxy"
+    shape2: "xbx"
+    shape3: "yxy"
+    ingredients:
+      x: "GOLD_BLOCK"
+      y: "DIAMOND_BLOCK"
+      b: "NETHER_STAR"
+    # 恢复量
+    heal_amount: 2
+    # 药水效果、持续时间和等级
+    potion_effects:
+      - "regeneration 2400 1"
+      - "absorption 600 1"
+    # 生命上限小于maxHealth时
+    eatMsg: "§a你食用了生命果实，恢复了生命上限并获得了额外效果！"
+    # 生命上限大于maxHealth时
+    eatWithoutHealMsg: "§a你食用了生命果实！§c但无法继续提高生命上限！"
+
+
+# Squraemap相关
+
+hideOnMap:
+  Item:
+    material: "COMPASS"
+    name: "§b§kAAA§6§l§o隐藏雷达§b§kAAA"
+    lore:
+      # 此处不能为空
+      - ""
+      - "§b§o放在副手，你会消失在地图上"
+      - "§a剩余时间："
+      - "3600"
