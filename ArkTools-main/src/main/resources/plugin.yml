@@ -1,0 +1,12 @@
+name: ArkTools
+version: '${version}'
+main: cn.yvmou.arktools.ArkTools
+api-version: '1.13'
+prefix: ArkTools
+authors: [ yvmou ]
+description: tools
+website: www.yvmou.cn
+folia-supported: true
+commands:
+  arktools:
+    aliases: [ arktool, at ]
