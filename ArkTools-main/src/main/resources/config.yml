@@ -79,8 +79,5 @@ hideOnMap:
     material: "COMPASS"
     name: "§b§kAAA§6§l§o隐藏雷达§b§kAAA"
     lore:
-      # 此处不能为空
-      - ""
       - "§b§o放在副手，你会消失在地图上"
-      - "§a剩余时间："
-      - "3600"
+    useCount: 10

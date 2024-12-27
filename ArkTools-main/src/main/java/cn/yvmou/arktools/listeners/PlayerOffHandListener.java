@@ -1,81 +1,85 @@
 package cn.yvmou.arktools.listeners;
 
 import cn.yvmou.arktools.ArkTools;
-import cn.yvmou.arktools.utils.TimerUtil;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import xyz.jpenilla.squaremap.api.Squaremap;
 import xyz.jpenilla.squaremap.api.SquaremapProvider;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 
 public class PlayerOffHandListener implements Listener {
-    private final ArkTools plugin;
+
     private final Squaremap mapAPI = SquaremapProvider.get();
-    private final TimerUtil timer;
-    private ItemStack item;
-    private List<String> lore;
-    private int leftTime;
-    private Player player;
+    private final ArkTools plugin;
+    private ItemStack offHandItem;
+    // 是否隐藏在地图上
+    private final Set<UUID> hideOnMapPlayers = new HashSet<>();
 
     public PlayerOffHandListener(ArkTools plugin) {
         this.plugin = plugin;
-        this.timer = new TimerUtil();
     }
 
-    private void setupTimer() {
-        timer.setTask(() -> {
-            // 定时任务逻辑：每10秒发送一条信息给玩家
-            if (leftTime <= 0) {
-                item.setAmount(0);
-            }
-            lore.set(3, String.valueOf(leftTime - 10));
-        });
+
+    // 玩家切换主手物品事件
+    @EventHandler
+    public void onPlayerCloseInventory(InventoryCloseEvent event) {
+        Player player = (Player)event.getPlayer();
+        handlePlayer(player);
     }
-    
+
+    // 玩家切换副手物品事件
     @EventHandler
     public void onPlayerOffHand(PlayerSwapHandItemsEvent event) {
-        setupTimer();
-        item = event.getOffHandItem();
-        player = event.getPlayer();
+        Player player = event.getPlayer();
+        handlePlayer(player);
+    }
 
-        if (item.getType() == Material.valueOf(plugin.config.getString("hideOnMap.Item.material"))
-                && item.getItemMeta().getItemName().equals(plugin.config.getString("hideOnMap.Item.name"))) 
-        {
-            lore = item.getItemMeta().getLore();
-            List<String> configLore = plugin.config.getStringList("hideOnMap.Item.lore");
-            if (lore != null) {
-                int count = 0;
-                for (String s : lore) {
-                    for (String s1 : configLore) {
-                        if (!s.equals(s1)) {
-                            // 现形
-                            mapAPI.playerManager().show(player.getUniqueId());
-                            player.sendMessage("§c你已出现在地图上！");
-                            return;
-                        }
-                        count++;
-                        if (count == 3) break;
-                    }
-                }
-            }
-            // 判断通过，隐藏玩家
-            leftTime = Integer.parseInt(lore.get(3));
-            mapAPI.playerManager().hidden(player.getUniqueId());
-            timer.start(plugin, 0L, 200L);
+    // 处理玩家
+    public void handlePlayer(Player player) {
+        offHandItem = player.getInventory().getItemInOffHand();
+        UUID playerId = player.getUniqueId();
+        boolean shouldHide = offHandItem != null && offHandItem.getType() == Material.valueOf(plugin.getConfig().getString("hideOnMap.Item.material")) && offHandItem.getItemMeta().getDisplayName().equals(plugin.getConfig().getString("hideOnMap.Item.name"));
+
+        if (shouldHide && !hideOnMapPlayers.contains(playerId)) {
+            hideOnMapPlayers.add(playerId);
+            mapAPI.playerManager().hide(playerId);
             player.sendMessage("§a你已经消失在地图上了！");
-        } else {
-            // 现形
-            mapAPI.playerManager().show(player.getUniqueId());
-            int time = timer.stop();
-            lore.set(3, String.valueOf(leftTime - 10));
-            if (time == 0) item.setAmount(0);
+        } else if (!shouldHide && hideOnMapPlayers.contains(playerId)) {
+            hideOnMapPlayers.remove(playerId);
+            mapAPI.playerManager().show(playerId);
+            boolean res = changeNBT(offHandItem);
+            if (res) player.sendMessage("§c你的隐藏雷达已损毁！");
             player.sendMessage("§c你已出现在地图上！");
+        }
+    }
+
+    private boolean changeNBT(ItemStack item) {
+
+        ItemMeta meta = item.getItemMeta();
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        NamespacedKey key = new NamespacedKey(plugin, "useCount");
+        int currentValue = pdc.has(key, PersistentDataType.INTEGER) ? pdc.get(key, PersistentDataType.INTEGER) : 0;
+        if (currentValue == (int) plugin.config.get("hideOnMap.Item.useCount")) {
+            item.setAmount(0);
+            return true;
+        }
+        else {
+            pdc.set(key, PersistentDataType.INTEGER, currentValue + 1);
+            return false;
         }
     }
 }
